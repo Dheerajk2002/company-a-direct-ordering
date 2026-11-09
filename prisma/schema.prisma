@@ -1,0 +1,62 @@
+﻿datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Outlet {
+  id                  String           @id @default(cuid())
+  name                String           @unique
+  fssaiLicense        String
+  isCloudKitchen      Boolean          @default(false)
+  minPrepMinutes      Int              @default(25)
+  managerOverrideMins Int?
+  deliveryRadiusKm    Float            @default(6.0)
+  menuItems           OutletMenuItem[]
+  orders              Order[]
+}
+
+model MenuItem {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  category        String
+  description     String
+  photoUrl        String
+  priceInr        Int
+  isVeg           Boolean
+  spiceLevel      String
+  allergens       String
+  basePrepMinutes Int              @default(20)
+  outlets         OutletMenuItem[]
+}
+
+model OutletMenuItem {
+  id          String   @id @default(cuid())
+  outletId    String
+  menuItemId  String
+  priceInr    Int
+  isAvailable Boolean  @default(true)
+  outlet      Outlet   @relation(fields: [outletId], references: [id])
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@unique([outletId, menuItemId])
+}
+
+model Order {
+  id                  String   @id
+  outletId            String
+  customerPhone       String
+  itemsSummary        String
+  totalInr            Int
+  paymentMethod       String
+  status              String   @default("PREPARING")
+  placedAt            DateTime @default(now())
+  promisedAt          DateTime
+  aiEstimatedMinutes  Int
+  managerAlerted      Boolean  @default(false)
+  dpdpMarketingOptIn  Boolean  @default(false)
+  outlet              Outlet   @relation(fields: [outletId], references: [id])
+}
